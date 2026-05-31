@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     app_name: str = "pos-retail"
     environment: str = Field(default="local")
 
-    database_url: str = Field(default="postgresql+psycopg://pos:pos@localhost:5432/pos")
+    database_url: str = Field(default="sqlite:///./pos_local.db")
     redis_url: str = Field(default="redis://localhost:6379/0")
 
     jwt_secret: str = Field(default="change-me-in-prod")
