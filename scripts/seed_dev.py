@@ -32,29 +32,29 @@ def main() -> None:
             db.flush()
             print(f"+ Branch creada: {branch.id}")
 
-        admin = db.execute(select(User).where(User.email == "admin@pos.local")).scalar_one_or_none()
+        admin = db.execute(select(User).where(User.email == "admin@pos.com")).scalar_one_or_none()
         if admin is None:
             admin = User(
                 name="Admin Local",
-                email="admin@pos.local",
+                email="admin@pos.com",
                 password_hash=hash_password("admin123"),
                 role=UserRole.admin,
                 branch_id=branch.id,
             )
             db.add(admin)
-            print("+ Admin creado: admin@pos.local / admin123")
+            print("+ Admin creado: admin@pos.com / admin123")
 
-        cashier = db.execute(select(User).where(User.email == "cajero@pos.local")).scalar_one_or_none()
+        cashier = db.execute(select(User).where(User.email == "cajero@pos.com")).scalar_one_or_none()
         if cashier is None:
             cashier = User(
                 name="Cajero Demo",
-                email="cajero@pos.local",
+                email="cajero@pos.com",
                 password_hash=hash_password("cajero123"),
                 role=UserRole.cashier,
                 branch_id=branch.id,
             )
             db.add(cashier)
-            print("+ Cajero creado: cajero@pos.local / cajero123")
+            print("+ Cajero creado: cajero@pos.com / cajero123")
 
         created_products = 0
         for sku, name, price, stock, category, barcode in _PRODUCTS:

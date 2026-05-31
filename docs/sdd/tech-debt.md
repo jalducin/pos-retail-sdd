@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Versión: 1.3.0
+- Versión: 1.4.0
 - Fecha de inicio: 2026-05-31
 - Metodología: SDD (Spec-Driven Development)
 
@@ -142,6 +142,17 @@ Cada vez que se agregue un punto nuevo (FR, NFR, decisión de diseño, tarea, en
 - **Trigger de resolución:** migrar a `bcrypt` directo (sin passlib) o adoptar `argon2-cffi` (más moderno).
 - **Estado:** ABIERTO
 
+### DT-13: EmailStr rechaza dominios reservados (.local, .test, .example)
+
+- **Categoría:** GAP-CALIDAD
+- **Origen:** `app/schemas/auth.py` (campo `EmailStr`) + scripts/seed_dev.py (versión inicial sembraba `admin@pos.local`).
+- **Motivo:** Pydantic `EmailStr` usa `email_validator`, que cumple RFC 6762 y rechaza dominios `.local` / `.test` / `.example`. El login devolvía 422 antes del check de password, bloqueando integración con frontend.
+- **Impacto si no se resuelve:** Si alguien repite el patrón (emails `*.local` en seeds, fixtures, docs), el login fallará con un 422 confuso que parece bug del frontend.
+- **Mitigación aplicada:** seed cambiado a `admin@pos.com` / `cajero@pos.com`; script one-shot `scripts/fix_email_domain.py` aplicado a `pos_local.db`.
+- **Dueño:** sin asignar
+- **Trigger de resolución:** definir guía interna de dominios para fixtures (e.g. `@pos.com` o `@example.com` con `email_validator(deny_localpart=False)` si fuera necesario).
+- **Estado:** MITIGADO
+
 ### DT-08: AuditLog sin retención ni archivado definido
 
 - **Categoría:** GAP-CALIDAD
@@ -172,3 +183,4 @@ Cada vez que se agregue un punto nuevo (FR, NFR, decisión de diseño, tarea, en
 | 1.1.0 | 2026-05-31 | Agregadas DT-05 (rate limiting naïve), DT-06 (compensación manual inventario), DT-07 (typo changelog), DT-08 (retención AuditLog). Convención de IDs extendida con T{S}-NN y D-XX. Origen de DT-03 actualizado a design §6. |
 | 1.2.0 | 2026-05-31 | Agregadas DT-09 (process_sale complejidad cognitiva > 15) y DT-10 (Idempotency-Key sin TTL Redis), derivadas del scaffolding backend. |
 | 1.3.0 | 2026-05-31 | Agregadas DT-11 (SQLite default en dev/test) y DT-12 (passlib+bcrypt pin), derivadas de la habilitación de SQLite local. |
+| 1.4.0 | 2026-05-31 | Agregada DT-13 (EmailStr rechaza dominios .local), descubierta al integrar el frontend de Antigravity. Estado MITIGADO. |
