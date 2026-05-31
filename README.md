@@ -3,7 +3,7 @@
 Proyecto de práctica desarrollado con **Spec-Driven Development (SDD)** usando Claude Code.
 
 ## Stack
-- Python 3.11 + FastAPI
+- Python 3.12 + FastAPI
 - PostgreSQL + Redis
 - AWS Lambda + API Gateway + Step Functions
 - JWT Auth + RBAC
