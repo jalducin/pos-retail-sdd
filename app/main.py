@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api import routes_auth, routes_products, routes_sales
+from app.api import routes_auth, routes_branches, routes_products, routes_reports, routes_sales
 from app.core.config import get_settings
 from app.core.errors import POSError, pos_error_handler
 from app.core.logging import configure_logging, new_request_id
@@ -9,8 +9,17 @@ from app.core.logging import configure_logging, new_request_id
 configure_logging()
 settings = get_settings()
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(title="POS Retail API", version="1.1.0")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.middleware("http")
 async def request_id_middleware(request: Request, call_next):
@@ -45,5 +54,7 @@ def health() -> dict:
 
 
 app.include_router(routes_auth.router)
+app.include_router(routes_branches.router)
 app.include_router(routes_products.router)
 app.include_router(routes_sales.router)
+app.include_router(routes_reports.router)
