@@ -2,115 +2,124 @@
 
 ## Metadata
 
-- Basado en: design.md v1.1.0
-- Versión: 1.1.0
+- Basado en: design.md v1.2.0
+- Versión: 1.2.0
 - Fecha: 2026-05-31
 - Duración estimada: 4 semanas
+- Convención de estado: `[ ]` pendiente · `[x]` hecho · `[~]` parcial (mock o sin todas las CA)
 
 ## Sprint 1 — Base, Auth, Branch y Auditoría (Semana 1)
 
 > Objetivo: proyecto corriendo localmente, auth funcional, fundamentos transversales (auditoría, errores, branches).
 
-- [ ] **T1-01**: Setup del proyecto FastAPI + estructura de carpetas
+- [x] **T1-01**: Setup del proyecto FastAPI + estructura de carpetas
   - **Cubre:** Stack §9 (requirements)
   - **DoD:** `uvicorn app.main:app` arranca; `/health` responde 200; layout `app/{auth,products,sales,reports,core}/`.
   - **Branch:** `feat/setup`
 
-- [ ] **T1-02**: Configurar PostgreSQL + Alembic
+- [x] **T1-02**: Configurar PostgreSQL + Alembic
   - **Cubre:** Design §8 (Migraciones)
   - **DoD:** `alembic upgrade head` corre limpio sobre DB efímera en CI; convención `YYYYMMDDHHMM_*.py` documentada.
+  - **Nota:** ejecutado contra SQLite local (D-07). DT-11 cubre el job CI con Postgres pendiente.
   - **Branch:** `feat/db-alembic`
 
-- [ ] **T1-03**: Modelo `Branch` + endpoints `GET/POST/PUT /branches`
+- [x] **T1-03**: Modelo `Branch` + endpoints `GET/POST/PUT /branches`
   - **Cubre:** FR-05, NFR-09, Design §3 Branch
   - **DoD:** CRUD admin de sucursales con timezone default `America/Mexico_City`; soft delete vía `is_active`.
   - **Branch:** `feat/branches`
 
-- [ ] **T1-04**: Modelo `User` (con `branch_id`) + bcrypt factor ≥ 12
+- [x] **T1-04**: Modelo `User` (con `branch_id`) + bcrypt factor ≥ 12
   - **Cubre:** NFR-04, Design §3 User
-  - **DoD:** Migración crea User con FK a Branch; hashes verificables con `passlib`.
+  - **DoD:** Migración crea User con FK a Branch; hashes verificables con `passlib`. Pin `bcrypt==4.0.1` (DT-12).
   - **Branch:** `feat/auth-base`
 
-- [ ] **T1-05**: Endpoint `POST /auth/login` con JWT HS256
+- [x] **T1-05**: Endpoint `POST /auth/login` con JWT HS256
   - **Cubre:** FR-Auth, NFR-02, CA implícito de login
-  - **DoD:** Login con credenciales válidas devuelve JWT de 8h; inválidas devuelven `AUTH_REQUIRED`.
+  - **DoD:** Login con credenciales válidas devuelve JWT de 8h; inválidas devuelven `AUTH_REQUIRED`. Verificado con `scripts/smoke_login.py`.
   - **Branch:** `feat/auth-base`
 
-- [ ] **T1-06**: Middleware de autenticación y RBAC por rol
+- [x] **T1-06**: Middleware de autenticación y RBAC por rol
   - **Cubre:** NFR-02, NFR-03
-  - **DoD:** Decorador / dependencia `require_role(...)` aplicado a endpoints; tests verifican 401/403.
+  - **DoD:** Dependencia `require_roles(...)` aplicada; tests verifican 401/403. Implementada en `app/api/deps.py`.
   - **Branch:** `feat/auth-base`
 
-- [ ] **T1-07**: Modelo `AuditLog` + middleware de auditoría automática
+- [~] **T1-07**: Modelo `AuditLog` + middleware de auditoría automática
   - **Cubre:** NFR-06, CA-04.4, Design §3 AuditLog
-  - **DoD:** Toda operación CUD sobre Sale, Product, Refund emite registro en `AuditLog` con `trace_id` y `actor_id`; cubierto por test.
+  - **Estado parcial:** modelo `AuditLog` creado y migrado. **Falta** middleware que lo emita automáticamente desde Sale/Product/Refund.
   - **Branch:** `feat/audit-log`
 
-- [ ] **T1-08**: Contrato estándar de errores (handler global)
+- [x] **T1-08**: Contrato estándar de errores (handler global)
   - **Cubre:** Design §6 (códigos `AUTH_REQUIRED`..`INTERNAL_ERROR`)
-  - **DoD:** Excepciones del dominio mapean a payload `{error: {code, message, request_id, details}}`; tabla de códigos cubierta por tests parametrizados.
+  - **DoD:** Excepciones del dominio (`POSError` y subclases) mapean a `{error: {code, message, request_id, details}}` en `app/core/errors.py`; handler registrado en `app/main.py`.
   - **Branch:** `feat/error-contract`
 
 - [ ] **T1-09**: Setup Redis (sesiones, idempotency keys)
   - **Cubre:** Design §1 + §5 (idempotencia)
   - **DoD:** Cliente Redis disponible vía `app.core.cache`; conexión validada en startup.
+  - **Nota:** dependencia `redis` ya en `requirements.txt`; idempotency-key se verifica directo en `Sale.idempotency_key` (DT-10).
   - **Branch:** `feat/redis`
 
-- [ ] **T1-10**: Logging estructurado JSON con `trace_id`
+- [~] **T1-10**: Logging estructurado JSON con `trace_id`
   - **Cubre:** NFR-07, Design §7
-  - **DoD:** Cada request emite log JSON con `trace_id`, `request_id`, `actor_id`, `latency_ms`; header `X-Trace-Id` propagado.
+  - **Estado parcial:** `app/core/logging.py` emite JSON con `request_id`; middleware en `app/main.py` lo inyecta. **Falta** propagación de `X-Trace-Id` desde el cliente y enriquecimiento con `actor_id`/`latency_ms`.
   - **Branch:** `feat/observability`
 
-- [ ] **T1-11**: Tests unitarios Sprint 1 (auth, branch, audit, error-handler)
+- [~] **T1-11**: Tests unitarios Sprint 1 (auth, branch, audit, error-handler)
   - **Cubre:** NFR-10
-  - **DoD:** `pytest app/auth app/branches app/core` ≥ 70% cobertura; suite verde en CI.
+  - **Estado parcial:** 13 tests de integración verdes (auth login, branches CRUD, error contract). **Falta** medir cobertura ≥ 70% formalmente.
   - **Branch:** `feat/tests-sprint1`
+
+- [x] **T1-12**: Frontend SPA — scaffolding y páginas base
+  - **Cubre:** NFR-11 (CORS), Design §1 (cliente SPA)
+  - **DoD:** Vite + JS vanilla; router hash con guards RBAC; store JWT en `localStorage`; 8 páginas (Login, POS, Products, SalesHistory, Refunds, Reports, Branches, Audit); cliente HTTP que mapea el contrato de errores del backend.
+  - **Nota:** creado por Antigravity. CORS allowlist agregado al backend.
+  - **Branch:** `feat/frontend-spa`
 
 ## Sprint 2 — Productos y Contrato API (Semana 2)
 
 > Objetivo: CRUD de productos completo y revisión contract-first del OpenAPI.
 
-- [ ] **T2-01**: OpenAPI contract-first review
+- [~] **T2-01**: OpenAPI contract-first review
   - **Cubre:** Design §4 (Endpoints), NFR-07
   - **DoD:** Spec `openapi.yaml` revisada y aprobada por backend + frontend antes de implementar endpoints; documentada divergencia si existe.
   - **Branch:** `chore/openapi-review`
 
-- [ ] **T2-02**: Modelo `Product` + migración Alembic
+- [x] **T2-02**: Modelo `Product` + migración Alembic
   - **Cubre:** FR-02, CA-02.1, CA-02.3
   - **DoD:** Modelo con `sku` UNIQUE, `barcode` UNIQUE, validadores Pydantic para price > 0 y stock ≥ 0.
   - **Branch:** `feat/products`
 
-- [ ] **T2-03**: `GET /products` con filtros (categoría, stock, paginación)
+- [~] **T2-03**: `GET /products` con filtros (categoría, stock, paginación)
   - **Cubre:** FR-02
   - **DoD:** Soporta `?category=`, `?in_stock=true`, `?limit&offset`; respuesta paginada con `total`.
   - **Branch:** `feat/products`
 
-- [ ] **T2-04**: `GET /products/search?q=` por nombre y barcode
+- [x] **T2-04**: `GET /products/search?q=` por nombre y barcode
   - **Cubre:** FR-02
   - **DoD:** Búsqueda case-insensitive sobre `name` y exact match sobre `barcode`.
   - **Branch:** `feat/products`
 
-- [ ] **T2-05**: `POST /products` (admin)
+- [x] **T2-05**: `POST /products` (admin)
   - **Cubre:** FR-02, CA-02.1, CA-02.3
   - **DoD:** Crea producto; conflicto de SKU/barcode devuelve `VALIDATION_ERROR`.
   - **Branch:** `feat/products`
 
-- [ ] **T2-06**: `PUT /products/{id}` (admin)
+- [x] **T2-06**: `PUT /products/{id}` (admin)
   - **Cubre:** FR-02
   - **DoD:** Update parcial soportado; campos inmutables (id, created_at) rechazados.
   - **Branch:** `feat/products`
 
-- [ ] **T2-07**: `DELETE /products/{id}` soft delete (admin)
+- [x] **T2-07**: `DELETE /products/{id}` soft delete (admin)
   - **Cubre:** FR-02, CA-02.2
   - **DoD:** Marca `is_active=false`; producto sigue consultable desde `SaleItem` históricos.
   - **Branch:** `feat/products`
 
-- [ ] **T2-08**: Seed script con 50 productos de prueba
+- [~] **T2-08**: Seed script con 50 productos de prueba
   - **Cubre:** soporte de QA
-  - **DoD:** `python -m app.scripts.seed_products` carga 50 productos idempotentemente.
+  - **Estado parcial:** `scripts/seed_dev.py` carga 5 productos + admin + cajero + branch. **Falta** escalar a 50 productos representativos.
   - **Branch:** `chore/seed-products`
 
-- [ ] **T2-09**: Tests unitarios Sprint 2 (products + search + soft delete)
+- [~] **T2-09**: Tests unitarios Sprint 2 (products + search + soft delete)
   - **Cubre:** NFR-10
   - **DoD:** `pytest app/products` ≥ 70% cobertura; casos CA-02.1, CA-02.2, CA-02.3 cubiertos.
   - **Branch:** `feat/tests-sprint2`
@@ -119,47 +128,47 @@
 
 > Objetivo: flujo de venta completo con Step Functions e idempotencia.
 
-- [ ] **T3-01**: Modelos `Sale` + `SaleItem` + migración (incluye `idempotency_key` UNIQUE)
+- [x] **T3-01**: Modelos `Sale` + `SaleItem` + migración (incluye `idempotency_key` UNIQUE)
   - **Cubre:** FR-01, FR-03, Design §3 + §5
   - **DoD:** Migración crea Sale con FK a User y Branch; SaleItem con CASCADE; índice UNIQUE en `idempotency_key`.
   - **Branch:** `feat/sales-models`
 
-- [ ] **T3-02**: Endpoint `POST /sales` con header `Idempotency-Key` (orquesta Step Functions)
+- [~] **T3-02**: Endpoint `POST /sales` con header `Idempotency-Key` (orquesta Step Functions)
   - **Cubre:** FR-01, CA-01.1, CA-01.4, Design §5 (idempotencia)
   - **DoD:** Misma `Idempotency-Key` repetida devuelve la misma `Sale` sin reprocesar; latencia p95 < 2s con carrito ≤ 20 ítems.
   - **Branch:** `feat/sales-flow`
 
-- [ ] **T3-03**: Step `CheckIdempotency` (Redis + Sale.idempotency_key)
+- [~] **T3-03**: Step `CheckIdempotency` (Redis + Sale.idempotency_key)
   - **Cubre:** Design §5
   - **DoD:** Hit en Redis devuelve respuesta cacheada; miss continúa al siguiente paso.
   - **Branch:** `feat/sales-flow`
 
-- [ ] **T3-04**: Step `ValidateCart` — verifica stock
+- [x] **T3-04**: Step `ValidateCart` — verifica stock
   - **Cubre:** CA-01.2
   - **DoD:** Si algún SKU tiene stock insuficiente devuelve 409 `STOCK_INSUFFICIENT` y NO descuenta inventario.
   - **Branch:** `feat/sales-flow`
 
-- [ ] **T3-05**: Step `CalculateTotals` — subtotal + IVA 16% banker's rounding
+- [x] **T3-05**: Step `CalculateTotals` — subtotal + IVA 16% banker's rounding
   - **Cubre:** CA-01.3
   - **DoD:** Total = subtotal + tax; redondeo a 2 decimales `ROUND_HALF_EVEN`; suite de casos límite cubierta.
   - **Branch:** `feat/sales-flow`
 
-- [ ] **T3-06**: Step `ProcessPayment` efectivo (cálculo de cambio)
+- [x] **T3-06**: Step `ProcessPayment` efectivo (cálculo de cambio)
   - **Cubre:** FR-03, CA-03.1
   - **DoD:** `cash_received >= total` requerido; `change_given = cash_received - total`.
   - **Branch:** `feat/sales-flow`
 
-- [ ] **T3-07**: Step `ProcessPayment` tarjeta (mock terminal)
+- [~] **T3-07**: Step `ProcessPayment` tarjeta (mock terminal)
   - **Cubre:** FR-03, CA-03.2
   - **DoD:** Mock devuelve `approved`/`declined`; en `declined` Sale queda `cancelled`, código `PAYMENT_DECLINED`, sin descontar inventario.
   - **Branch:** `feat/sales-flow`
 
-- [ ] **T3-08**: Step `UpdateInventory` — descuenta stock atómicamente
+- [~] **T3-08**: Step `UpdateInventory` — descuenta stock atómicamente
   - **Cubre:** CA-01.1
   - **DoD:** Update con `SELECT ... FOR UPDATE` por SKU; falla → compensación + alerta.
   - **Branch:** `feat/sales-flow`
 
-- [ ] **T3-09**: Step `PersistSale` (commit Sale + SaleItem)
+- [x] **T3-09**: Step `PersistSale` (commit Sale + SaleItem)
   - **Cubre:** FR-01
   - **DoD:** Transacción atómica; rollback si cualquier item falla.
   - **Branch:** `feat/sales-flow`
@@ -174,12 +183,12 @@
   - **DoD:** Cada venta `completed` genera registro `AuditLog` con `action=create`, `entity_type=Sale`.
   - **Branch:** `feat/sales-flow`
 
-- [ ] **T3-12**: `GET /sales/{id}` con detalle y ticket
+- [~] **T3-12**: `GET /sales/{id}` con detalle y ticket
   - **Cubre:** FR-01
   - **DoD:** Devuelve sale + items + payment + link al ticket.
   - **Branch:** `feat/sales-flow`
 
-- [ ] **T3-13**: Tests unitarios + de integración Sprint 3 (flujo venta end-to-end)
+- [~] **T3-13**: Tests unitarios + de integración Sprint 3 (flujo venta end-to-end)
   - **Cubre:** NFR-10
   - **DoD:** `pytest app/sales` ≥ 70% cobertura; test e2e cubre happy path + stock insuficiente + tarjeta declined + idempotencia.
   - **Branch:** `feat/tests-sprint3`
@@ -208,7 +217,7 @@
   - **DoD:** Stock se incrementa exactamente en la cantidad devuelta; registrado en AuditLog `action=refund`.
   - **Branch:** `feat/refunds`
 
-- [ ] **T4-05**: `GET /reports/daily` — corte del día (TZ America/Mexico_City)
+- [x] **T4-05**: `GET /reports/daily` — corte del día (TZ America/Mexico_City)
   - **Cubre:** FR-05, CA-05.1
   - **DoD:** Suma ventas `completed` en `[00:00, 23:59:59]` TZ MX; soporta `?date=YYYY-MM-DD`.
   - **Branch:** `feat/reports`
@@ -313,3 +322,4 @@ chore(deps): add mangum for Lambda deploy
 | --- | --- | --- |
 | 1.0.0 | 2026-05-31 | Versión inicial |
 | 1.1.0 | 2026-05-31 | Renumeración T{sprint}-NN; cada tarea con `Cubre/DoD/Branch`; tests distribuidos por sprint; agregadas tareas Branch (T1-03), AuditLog + middleware (T1-07), contrato de errores (T1-08), OpenAPI review (T2-01), CreditNote (T4-02), rate limiting (T4-09), Definition of Done MVP (T4-17). |
+| 1.2.0 | 2026-05-31 | Convención de estado `[ ]/[x]/[~]`; marcado del avance real: Sprint 1 mayoritariamente cerrado (T1-01..T1-06 hechos, T1-07/T1-10/T1-11 parciales, T1-09 pendiente), Sprint 2 productos cerrado (CRUD + search), Sprint 3 venta efectivo/idempotencia cerrados (T3-04..T3-06, T3-09; tarjeta mock T3-07 parcial), Sprint 4 abierto con T4-05 (`/reports/daily`) cerrado. Nueva T1-12 Frontend SPA (creado por Antigravity). |

@@ -3,7 +3,7 @@
 ## Metadata
 
 - Proyecto: POS Retail (práctica)
-- Versión: 1.1.1
+- Versión: 1.2.0
 - Fecha: 2026-05-31
 - Metodología: Spec-Driven Development (SDD)
 
@@ -110,6 +110,7 @@ Sistema de punto de venta para tienda retail con soporte multi-cajero, multi-suc
 | NFR-08 | Disponibilidad | SLA de servicio | 99.5% mensual (horario operativo) |
 | NFR-09 | Localización | Moneda y zona horaria | MXN, America/Mexico_City |
 | NFR-10 | Calidad | Cobertura de tests | ≥ 70% en módulos `app/sales`, `app/products`, `app/auth` |
+| NFR-11 | Seguridad/Integración | CORS allowlist explícita | Backend acepta solo orígenes en lista blanca; en dev `http://localhost:5173` y `http://127.0.0.1:5173`; en prod, el dominio del frontend desplegado |
 
 ## 6. Fuera de Alcance (Out of Scope) — v1.0
 
@@ -127,6 +128,7 @@ Sistema de punto de venta para tienda retail con soporte multi-cajero, multi-suc
 - El régimen fiscal aplicable es el de la persona moral operadora (IVA 16% trasladado).
 - La red de la tienda es estable durante el horario operativo (justifica diferir modo offline a v2.0).
 - La impresora de tickets es independiente: el sistema entrega el ticket como texto plano y PDF, no maneja drivers de impresora.
+- Los emails de cuentas de servicio y fixtures usan dominios válidos por RFC 5321 (no `.local`, `.test`, `.example` reservados por RFC 6762/2606). Ver DT-13.
 
 ## 8. Dependencias Externas
 
@@ -140,7 +142,9 @@ Sistema de punto de venta para tienda retail con soporte multi-cajero, multi-suc
 | Capa | Tecnología |
 | --- | --- |
 | Backend | Python 3.12 + FastAPI |
-| Base de datos | PostgreSQL |
+| Frontend | SPA Vite + JavaScript vanilla (sin framework); router hash, store JWT en localStorage |
+| Base de datos (prod/staging) | PostgreSQL |
+| Base de datos (dev/test) | SQLite con StaticPool en tests (ver DT-11) |
 | Cache | Redis |
 | Deploy | AWS Lambda + API Gateway (Mangum) |
 | Orquestación | Step Functions (flujo de venta) |
@@ -153,3 +157,4 @@ Sistema de punto de venta para tienda retail con soporte multi-cajero, multi-suc
 | 1.0.0 | 2026-05-31 | Versión inicial |
 | 1.1.0 | 2026-05-31 | IDs FR/NFR estables, criterios de aceptación por UC, glosario, fuera-de-alcance, supuestos, dependencias. Decisión: modo offline difierido a v2.0 |
 | 1.1.1 | 2026-05-31 | Stack §9: Python 3.11 → 3.12 (alineación con entorno local y CI). |
+| 1.2.0 | 2026-05-31 | NFR-11 (CORS allowlist explícita); §7 supuesto sobre dominios de email RFC válidos (DT-13); Stack §9 agrega Frontend SPA Vite + JS vanilla y separa entornos de DB. |

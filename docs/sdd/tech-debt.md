@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Versión: 1.4.0
+- Versión: 1.5.0
 - Fecha de inicio: 2026-05-31
 - Metodología: SDD (Spec-Driven Development)
 
@@ -153,6 +153,27 @@ Cada vez que se agregue un punto nuevo (FR, NFR, decisión de diseño, tarea, en
 - **Trigger de resolución:** definir guía interna de dominios para fixtures (e.g. `@pos.com` o `@example.com` con `email_validator(deny_localpart=False)` si fuera necesario).
 - **Estado:** MITIGADO
 
+### DT-14: SalesHistoryPage envía filtros `status` y `payment_method` que el backend ignora
+
+- **Categoría:** INCONSISTENCIA-DOCS
+- **Origen:** `frontend/src/pages/SalesHistoryPage.js` (filtros UI) vs `app/api/routes_sales.py::list_sales` (acepta `cashier_id`, `from`, `to`, `limit`, `offset`).
+- **Motivo:** El frontend se adelantó al backend; los selects de estado y método de pago aún no tienen efecto.
+- **Impacto si no se resuelve:** UX engañosa — el usuario selecciona "Completadas" o "Efectivo" y no filtra nada. Pasa desapercibido como bug.
+- **Mitigación temporal:** ninguna; FastAPI ignora los query params extra.
+- **Dueño:** sin asignar
+- **Trigger de resolución:** próxima iteración de Sprint 3 (extender `list_sales` con filtros `status`, `payment_method`, `branch_id`).
+- **Estado:** ABIERTO
+
+### DT-15: Endpoints pendientes del Sprint 4 vs frontend listo
+
+- **Categoría:** SCOPE-CUT
+- **Origen:** Frontend ya consume `POST /sales/{id}/refund`, `GET /audit-logs`, `GET /reports/top-products`, `GET /reports/cashier/{id}`. Backend aún no los implementa (T4-03, T4-08, T4-06, T4-07).
+- **Motivo:** Antigravity construyó el frontend completo contra el design contract; backend cubre hasta `/reports/daily`. Sprint 4 sigue abierto.
+- **Impacto si no se resuelve:** Páginas Refunds/Audit/Top Products/Cashier muestran banner amarillo "Endpoint pendiente". El flujo POS + login + branches + reportes diarios sí es funcional end-to-end.
+- **Dueño:** sin asignar
+- **Trigger de resolución:** T4-03, T4-06, T4-07, T4-08 del Sprint 4.
+- **Estado:** ABIERTO
+
 ### DT-08: AuditLog sin retención ni archivado definido
 
 - **Categoría:** GAP-CALIDAD
@@ -184,3 +205,4 @@ Cada vez que se agregue un punto nuevo (FR, NFR, decisión de diseño, tarea, en
 | 1.2.0 | 2026-05-31 | Agregadas DT-09 (process_sale complejidad cognitiva > 15) y DT-10 (Idempotency-Key sin TTL Redis), derivadas del scaffolding backend. |
 | 1.3.0 | 2026-05-31 | Agregadas DT-11 (SQLite default en dev/test) y DT-12 (passlib+bcrypt pin), derivadas de la habilitación de SQLite local. |
 | 1.4.0 | 2026-05-31 | Agregada DT-13 (EmailStr rechaza dominios .local), descubierta al integrar el frontend de Antigravity. Estado MITIGADO. |
+| 1.5.0 | 2026-05-31 | Agregadas DT-14 (SalesHistoryPage envía filtros que el backend ignora) y DT-15 (endpoints Sprint 4 pendientes vs frontend listo), derivadas de la integración con el frontend. |

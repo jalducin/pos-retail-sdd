@@ -3,16 +3,16 @@
 ## Metadata
 
 - Basado en: requirements.md v1.1.0
-- Versión: 1.1.1
+- Versión: 1.2.0
 - Fecha: 2026-05-31
 - Estado: Pendiente de aprobación
 
 ## 1. Arquitectura General
 
 ```text
-[Frontend / Terminal POS]
-        |
-   [API Gateway]
+[Frontend SPA — Vite + JS vanilla]
+        | HTTPS + JWT Bearer
+   [API Gateway — CORS allowlist]
         |
    [FastAPI App — Lambda + Mangum]
         |
@@ -26,7 +26,8 @@
 
 Componentes principales:
 
-- **API Gateway**: terminación TLS, rate limiting, ruteo a Lambda.
+- **Frontend SPA**: cliente web servido como estáticos (S3 + CloudFront en prod; `vite dev` en local). Router hash con guards RBAC, store JWT en `localStorage`, cliente HTTP centralizado que mapea el contrato de errores del backend a excepciones `APIError`.
+- **API Gateway**: terminación TLS, rate limiting (NFR-05), CORS allowlist (NFR-11), ruteo a Lambda.
 - **FastAPI App (Lambda)**: handlers HTTP, validación Pydantic, RBAC, emisión de eventos a Step Functions.
 - **Step Functions**: orquesta el flujo transaccional de venta (validación → pago → inventario → ticket → auditoría).
 - **PostgreSQL**: store transaccional (User, Branch, Product, Sale, SaleItem, RefundLog, CreditNote, AuditLog).
@@ -202,16 +203,33 @@ Cubre NFR-06. Se escribe desde un middleware de auditoría y desde el paso `Emit
 | --- | --- | --- | --- | --- |
 | POST | /sales | cajero+ | FR-01, FR-03, CA-01.1, CA-01.2, CA-01.4 | Nueva venta (idempotente) |
 | GET | /sales/{id} | cajero+ | FR-01 | Detalle + ticket |
-| GET | /sales | supervisor+ | FR-04 | Historial filtrado |
+| GET | /sales | supervisor+ | FR-04, FR-05 | Historial filtrado por `cashier_id`, `from`, `to`, `limit`, `offset` |
 | POST | /sales/{id}/refund | supervisor+ | FR-04, CA-04.1, CA-04.2, CA-04.3, CA-04.4 | Devolución + emisión de nota de crédito |
 
 ### Reports
 
 | Método | Ruta | Rol | Cubre | Descripción |
 | --- | --- | --- | --- | --- |
-| GET | /reports/daily | supervisor+ | FR-05, CA-05.1 | Corte del día |
+| GET | /reports/daily | supervisor+ | FR-05, CA-05.1 | Corte del día (param `?date=YYYY-MM-DD`, default hoy en TZ MX) |
 | GET | /reports/top-products | supervisor+ | FR-05 | Más vendidos |
 | GET | /reports/cashier/{id} | supervisor+ | FR-05, CA-05.2 | Corte por cajero |
+
+#### Shape de respuesta `/reports/daily`
+
+```json
+{
+  "date": "2026-05-31",
+  "timezone": "America/Mexico_City",
+  "totals": { "tickets": 12, "amount": "3450.00" },
+  "by_payment_method": {
+    "cash":     { "count": 7, "amount": "1820.00" },
+    "card":     { "count": 3, "amount": "980.00"  },
+    "transfer": { "count": 2, "amount": "650.00"  }
+  }
+}
+```
+
+Solo cuenta ventas en estado `completed`. El frontend (`ReportsPage._renderDailyReport`) consume este shape.
 
 ### Audit
 
@@ -253,10 +271,23 @@ END
 ### Autenticación y autorización
 
 - Todos los endpoints requieren JWT (HS256) excepto `POST /auth/login`.
-- RBAC: cajero → ventas; supervisor → refunds + reportes; admin → todo + branches + audit-logs.
+- RBAC: cajero → ventas; supervisor → refunds + reportes + historial; admin → todo + branches + audit-logs.
 - Tokens expiran en 8 horas. Sin refresh token en v1.0 (ver DT-03).
 - Rate limiting: 100 req/min por IP en API Gateway (NFR-05). Implementación inicial naïve a nivel API Gateway (ver DT-05).
 - Passwords con bcrypt factor ≥ 12.
+
+### CORS (NFR-11)
+
+- Backend habilita CORS con allowlist explícita (no `*`).
+- En dev: `http://localhost:5173`, `http://127.0.0.1:5173` (Vite default).
+- En staging/prod: dominio del frontend desplegado, configurable por env var.
+- Métodos permitidos: todos; headers permitidos: todos; `allow_credentials=true` para que el frontend pueda enviar `Authorization` y `Idempotency-Key`.
+
+### Validación de emails
+
+- `LoginRequest.email` usa Pydantic `EmailStr` (lib `email-validator`).
+- Rechaza dominios reservados por RFC 6762/2606: `.local`, `.test`, `.example`, `.invalid`.
+- Convención del proyecto: fixtures y seeds usan `@pos.com` o `@test.com`. Ver DT-13.
 
 ### Contrato estándar de errores
 
@@ -330,6 +361,8 @@ Los modelos usan tipos dialect-agnostic de SQLAlchemy 2.0 (`Uuid`, `JSON`) para 
 | D-03 | JWT sin refresh token | JWT con refresh + revocación en Redis | Simplifica v1.0; turno típico ≤ 8h. Se asume re-login al cierre. | DT-03 |
 | D-04 | Modo offline diferido a v2.0 | Cola local + reconciliación al reconectar | Excede alcance de 4 sprints; supuesto de red estable. | DT-01 |
 | D-05 | Rate limiting en API Gateway (sin sliding window Redis) | Sliding window por usuario en Redis | Implementación naïve suficiente para piloto; el upgrade queda registrado como deuda. | DT-05 |
+| D-06 | Frontend SPA en JS vanilla + Vite | React/Vue + SSR | Reduce el bundle y la curva para el equipo; el alcance v1.0 no justifica un framework. La SPA consume el contrato OpenAPI del backend. | NFR-11 |
+| D-07 | SQLite como DB de dev/test, Postgres en staging/prod | Postgres en todos los entornos | Onboarding sin Docker/Postgres local; tests pytest 6x más rápidos con SQLite en memoria. Riesgo de divergencia mitigado por DT-11 (job CI con Postgres efímero). | DT-11 |
 
 ## Changelog
 
@@ -338,3 +371,4 @@ Los modelos usan tipos dialect-agnostic de SQLAlchemy 2.0 (`Uuid`, `JSON`) para 
 | 1.0.0 | 2026-05-31 | Versión inicial |
 | 1.1.0 | 2026-05-31 | Matriz de trazabilidad (§2); entidades Branch, AuditLog, CreditNote; User.branch_id; endpoints /branches y /audit-logs; idempotencia en POST /sales; contrato estándar de errores (§6); §7 Observabilidad; §8 Migraciones; §9 Decisiones (D-01..D-05). |
 | 1.1.1 | 2026-05-31 | §8: agregada tabla de entornos de base de datos (SQLite dev/test, Postgres staging/prod) + referencia a DT-11. Modelos refactorizados a tipos dialect-agnostic. |
+| 1.2.0 | 2026-05-31 | §1: Frontend SPA agregado al diagrama de arquitectura. §4: shape concreto de `/reports/daily` documentado; `GET /sales` con sus query params reales. §6: secciones nuevas de CORS (NFR-11) y validación de emails (DT-13). §9: ADR D-06 (SPA vanilla + Vite) y D-07 (SQLite dev/test vs Postgres prod). |
