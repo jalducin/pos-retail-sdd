@@ -37,10 +37,10 @@ jobs:
       - name: Ejecutar pruebas unitarias (moto)
         run: pytest --tb=short --cov=backend --cov-report=term-missing -q
 
-      - name: Verificar que Swagger está accesible
+      - name: Verificar que Swagger está accesible (con Basic Auth)
         run: |
           python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 &
           sleep 3
-          curl -f http://localhost:8000/openapi.json || (echo "ERROR: /openapi.json no accesible" && exit 1)
-          curl -f http://localhost:8000/docs        || (echo "ERROR: /docs no accesible" && exit 1)
+          curl -f -u "admin:adminpizzeria2026&" http://localhost:8000/openapi.json || (echo "ERROR: /openapi.json no accesible" && exit 1)
+          curl -f -u "admin:adminpizzeria2026&" http://localhost:8000/docs        || (echo "ERROR: /docs no accesible" && exit 1)
           echo "Swagger OK"

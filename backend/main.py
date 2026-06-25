@@ -1,12 +1,15 @@
 import json
 import os
+import secrets
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
 import boto3
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from mangum import Mangum
 from pydantic import BaseModel, Field, field_validator
 
@@ -17,6 +20,22 @@ from .dynamo import (
 )
 from .menu import SIZES, TOPPINGS, get_size, get_topping, get_toppings_by_category
 
+# Credenciales de acceso a la documentación API (portfolio demo)
+_DOCS_USER = os.environ.get("DOCS_USER", "admin")
+_DOCS_PASSWORD = os.environ.get("DOCS_PASSWORD", "adminpizzeria2026&")
+_basic = HTTPBasic()
+
+
+def _require_docs_auth(credentials: HTTPBasicCredentials = Depends(_basic)) -> None:
+    ok_user = secrets.compare_digest(credentials.username.encode(), _DOCS_USER.encode())
+    ok_pwd = secrets.compare_digest(credentials.password.encode(), _DOCS_PASSWORD.encode())
+    if not (ok_user and ok_pwd):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            headers={"WWW-Authenticate": 'Basic realm="Pyzzeria API Docs"'},
+        )
+
+
 app = FastAPI(
     title="Pyzzeria API",
     version="1.0.0",
@@ -26,6 +45,8 @@ app = FastAPI(
         "**Autenticación**: fuera de alcance en v1 — todos los endpoints son públicos "
         "(demo sin datos sensibles ni pagos reales)."
     ),
+    docs_url=None,      # docs protegidas manualmente más abajo
+    openapi_url=None,   # ídem
 )
 
 app.add_middleware(
@@ -34,6 +55,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------------------
+# Documentación protegida con Basic Auth
+# ---------------------------------------------------------------------------
+
+@app.get("/docs", include_in_schema=False)
+def protected_docs(_: None = Depends(_require_docs_auth)):
+    return get_swagger_ui_html(openapi_url="/openapi.json", title="Pyzzeria API")
+
+
+@app.get("/openapi.json", include_in_schema=False)
+def protected_openapi(_: None = Depends(_require_docs_auth)):
+    return app.openapi()
+
 
 # ---------------------------------------------------------------------------
 # Schemas
