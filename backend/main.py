@@ -205,7 +205,7 @@ def create_order_endpoint(payload: OrderCreate) -> dict:
         "status": "recibido",
         "created_at": now,
         "updated_at": now,
-        "estimated_seconds": 8,
+        "estimated_seconds": 15,
     }
     create_order(order)
 
@@ -220,7 +220,7 @@ def create_order_endpoint(payload: OrderCreate) -> dict:
         "status": "recibido",
         "created_at": now,
         "updated_at": now,
-        "estimated_seconds": 8,
+        "estimated_seconds": 15,
     }
 
 

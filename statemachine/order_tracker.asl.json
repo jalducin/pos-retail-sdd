@@ -1,10 +1,10 @@
 {
-  "Comment": "Pyzzeria order state simulator — ~70s ciclo completo",
+  "Comment": "Pyzzeria order state simulator — ~79s ciclo completo",
   "StartAt": "WaitToPreparando",
   "States": {
     "WaitToPreparando": {
       "Type": "Wait",
-      "Seconds": 8,
+      "Seconds": 15,
       "Next": "SetPreparando"
     },
     "SetPreparando": {

@@ -246,7 +246,7 @@ Resources:
           "States": {
             "WaitToPreparando": {
               "Type": "Wait",
-              "Seconds": 8,
+              "Seconds": 15,
               "Next": "SetPreparando"
             },
             "SetPreparando": {
