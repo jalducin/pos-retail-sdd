@@ -472,86 +472,175 @@ h1 {
   justify-content: center;
 }
 
-/* Horno */
+/* Horno de piedra */
 .scene-oven {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-}
-
-.oven-flames {
-  display: flex;
   gap: 8px;
 }
 
-.oven-flames span {
-  font-size: 1.4rem;
-  display: block;
-  animation: flame-flicker 0.7s ease-in-out infinite alternate;
-}
-.oven-flames span:nth-child(2) { animation-delay: 0.18s; }
-.oven-flames span:nth-child(3) { animation-delay: 0.36s; }
-
-@keyframes flame-flicker {
-  0%   { transform: scaleY(1)    translateY(0);   }
-  100% { transform: scaleY(1.3)  translateY(-4px); }
-}
-
-.oven-body {
-  width: 120px;
-  background: linear-gradient(160deg, #323232, #1e1e1e);
-  border: 2px solid #4a4a4a;
-  border-radius: 10px;
-  padding: 10px;
-  box-shadow: 0 0 24px rgba(230,57,70,0.15), inset 0 1px 0 rgba(255,255,255,0.04);
-}
-
-.oven-glass {
-  background: #0d0d0d;
-  border-radius: 6px;
-  height: 58px;
+.stone-oven {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  border: 2px solid #383838;
   position: relative;
+  gap: 0;
+}
+
+/* Chimenea y humo */
+.chimney {
+  position: absolute;
+  top: 6px;
+  right: 26px;
+  width: 11px;
+  height: 22px;
+  background: linear-gradient(180deg, #6b5434, #4a3820);
+  border-radius: 2px 2px 0 0;
+  border: 1px solid #3a2810;
+  z-index: 2;
+}
+
+.smoke-wrap {
+  position: absolute;
+  top: -18px;
+  right: 20px;
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  z-index: 3;
+}
+
+.smoke {
+  border-radius: 50%;
+  background: rgba(200,180,160,0.35);
+  animation: smoke-rise 2.2s ease-out infinite;
+  opacity: 0;
+}
+.smoke.s1 { width: 8px; height: 14px; }
+.smoke.s2 { width: 6px; height: 10px; animation-delay: 0.9s; }
+
+@keyframes smoke-rise {
+  0%   { opacity: 0;    transform: translateY(0)     scaleX(1);   }
+  25%  { opacity: 0.5; }
+  100% { opacity: 0;    transform: translateY(-18px)  scaleX(1.8); }
+}
+
+/* Domo semicircular de piedra */
+.dome {
+  width: 134px;
+  height: 68px;
+  background: radial-gradient(ellipse at 50% 110%, #c8a06a, #a07848, #7a5832);
+  border-radius: 68px 68px 0 0;
+  position: relative;
+  box-shadow:
+    inset 0 -10px 28px rgba(255,110,10,0.25),
+    0 2px 0 #4a3820,
+    0 4px 12px rgba(0,0,0,0.4);
   overflow: hidden;
 }
 
-.oven-glass::before {
+/* Textura de ladrillo/piedra sobre el domo */
+.dome::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 90%, rgba(230,57,70,0.12) 0%, transparent 70%);
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 11px,
+      rgba(0,0,0,0.10) 11px, rgba(0,0,0,0.10) 12px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px, transparent 17px,
+      rgba(0,0,0,0.07) 17px, rgba(0,0,0,0.07) 18px
+    );
+}
+
+/* Resplandor naranja que late desde la boca */
+.dome-glow {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 36px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255,120,10,0.55), transparent 70%);
+  animation: glow-pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow-pulse {
+  0%   { opacity: 0.55; transform: translateX(-50%) scaleX(1);   }
+  100% { opacity: 1;    transform: translateX(-50%) scaleX(1.15); }
+}
+
+/* Boca arqueada oscura */
+.oven-mouth {
+  width: 62px;
+  height: 36px;
+  background: #0e0600;
+  border-radius: 31px 31px 0 0;
+  position: relative;
+  top: -1px;
+  overflow: hidden;
+  border: 2px solid #4a3010;
+  border-bottom: none;
+  box-shadow: inset 0 0 18px rgba(255,100,0,0.18);
+}
+
+.mouth-inside {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 1px;
+  padding-top: 4px;
 }
 
 .pizza-spin {
-  font-size: 1.8rem;
+  font-size: 1.05rem;
   display: block;
+  animation: slow-spin 5s linear infinite;
   position: relative;
-  z-index: 1;
-  animation: slow-spin 4s linear infinite;
+  z-index: 2;
 }
 
 @keyframes slow-spin {
   to { transform: rotate(360deg); }
 }
 
-.oven-knobs {
+.mouth-flames {
   display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-  margin-top: 6px;
-  padding-right: 2px;
+  gap: 1px;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
-.oven-knobs span {
-  width: 10px;
-  height: 10px;
-  background: radial-gradient(circle at 35% 35%, #888, #444);
-  border-radius: 50%;
-  border: 1px solid #777;
+.mflame {
+  font-size: 0.78rem;
+  display: block;
+  animation: flame-flicker 0.65s ease-in-out infinite alternate;
+}
+.mflame.f2 { animation-delay: 0.28s; }
+
+@keyframes flame-flicker {
+  0%   { transform: scaleY(1)   translateY(0);   }
+  100% { transform: scaleY(1.3) translateY(-3px); }
+}
+
+/* Losa de piedra base */
+.oven-slab {
+  width: 152px;
+  height: 13px;
+  background: linear-gradient(180deg, #8a7050, #5a4028);
+  border-radius: 2px 2px 5px 5px;
+  border-top: 1px solid #b09060;
+  box-shadow: 0 5px 12px rgba(0,0,0,0.45);
 }
 
 .scene-label {

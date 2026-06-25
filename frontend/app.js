@@ -253,10 +253,25 @@ function updateStateVisual(status) {
   if (status === 'horno') {
     el.innerHTML = `
       <div class="scene-oven">
-        <div class="oven-flames"><span>🔥</span><span>🔥</span><span>🔥</span></div>
-        <div class="oven-body">
-          <div class="oven-glass"><span class="pizza-spin">🍕</span></div>
-          <div class="oven-knobs"><span></span><span></span></div>
+        <div class="stone-oven">
+          <div class="smoke-wrap">
+            <span class="smoke s1"></span>
+            <span class="smoke s2"></span>
+          </div>
+          <div class="chimney"></div>
+          <div class="dome">
+            <div class="dome-glow"></div>
+          </div>
+          <div class="oven-mouth">
+            <div class="mouth-inside">
+              <span class="pizza-spin">🍕</span>
+              <div class="mouth-flames">
+                <span class="mflame f1">🔥</span>
+                <span class="mflame f2">🔥</span>
+              </div>
+            </div>
+          </div>
+          <div class="oven-slab"></div>
         </div>
         <p class="scene-label">Cocinando a 300°C 🌡️</p>
       </div>`;
