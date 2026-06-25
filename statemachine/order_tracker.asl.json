@@ -15,6 +15,7 @@
         "newStatus": "preparando",
         "estimatedSeconds": 12
       },
+      "ResultPath": null,
       "Next": "WaitToHorno"
     },
     "WaitToHorno": {
@@ -30,6 +31,7 @@
         "newStatus": "horno",
         "estimatedSeconds": 20
       },
+      "ResultPath": null,
       "Next": "WaitToListo"
     },
     "WaitToListo": {
@@ -45,6 +47,7 @@
         "newStatus": "listo",
         "estimatedSeconds": 30
       },
+      "ResultPath": null,
       "Next": "WaitToEntregado"
     },
     "WaitToEntregado": {
@@ -60,6 +63,7 @@
         "newStatus": "entregado",
         "estimatedSeconds": null
       },
+      "ResultPath": null,
       "End": true
     }
   }

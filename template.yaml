@@ -257,6 +257,7 @@ Resources:
                 "newStatus": "preparando",
                 "estimatedSeconds": 12
               },
+              "ResultPath": null,
               "Next": "WaitToHorno"
             },
             "WaitToHorno": {
@@ -272,6 +273,7 @@ Resources:
                 "newStatus": "horno",
                 "estimatedSeconds": 20
               },
+              "ResultPath": null,
               "Next": "WaitToListo"
             },
             "WaitToListo": {
@@ -287,6 +289,7 @@ Resources:
                 "newStatus": "listo",
                 "estimatedSeconds": 30
               },
+              "ResultPath": null,
               "Next": "WaitToEntregado"
             },
             "WaitToEntregado": {
@@ -302,6 +305,7 @@ Resources:
                 "newStatus": "entregado",
                 "estimatedSeconds": null
               },
+              "ResultPath": null,
               "End": true
             }
           }
