@@ -287,14 +287,30 @@ Resources:
               "Parameters": {
                 "orderId.$": "$.orderId",
                 "newStatus": "listo",
-                "estimatedSeconds": 30
+                "estimatedSeconds": 15
+              },
+              "ResultPath": null,
+              "Next": "WaitToEnRuta"
+            },
+            "WaitToEnRuta": {
+              "Type": "Wait",
+              "Seconds": 15,
+              "Next": "SetEnRuta"
+            },
+            "SetEnRuta": {
+              "Type": "Task",
+              "Resource": "${PyzzeriaStatusUpdateFunction.Arn}",
+              "Parameters": {
+                "orderId.$": "$.orderId",
+                "newStatus": "en_ruta",
+                "estimatedSeconds": 20
               },
               "ResultPath": null,
               "Next": "WaitToEntregado"
             },
             "WaitToEntregado": {
               "Type": "Wait",
-              "Seconds": 30,
+              "Seconds": 20,
               "Next": "SetEntregado"
             },
             "SetEntregado": {

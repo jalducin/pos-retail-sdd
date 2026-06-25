@@ -16,12 +16,6 @@ const appState = {
 
 // ─── Inicialización ───────────────────────────────────────────────────────────
 async function initApp() {
-  // Enlazar botón de spec al URL configurado
-  const specBtn = document.getElementById('btn-spec');
-  if (specBtn && typeof API_BASE_URL !== 'undefined') {
-    specBtn.href = `${API_BASE_URL}/docs`;
-  }
-
   try {
     const [sizesRes, toppingsRes] = await Promise.all([
       fetch(`${API_BASE_URL}/api/menu/sizes`),
@@ -226,10 +220,11 @@ const STATUS_MSGS = {
   preparando: '¡Manos en la masa! Estamos armando tu pizza 👨‍🍳',
   horno:      '¡Al horno! Cocinando a 300°C 🔥',
   listo:      '¡Lista! Empaquetando tu pizza ✅',
+  en_ruta:    '¡En camino! Tu pizza está en ruta 🛵',
   entregado:  '¡Entregado! Buen provecho 🎉',
 };
 
-const STATUS_ORDER = ['recibido', 'preparando', 'horno', 'listo', 'entregado'];
+const STATUS_ORDER = ['recibido', 'preparando', 'horno', 'listo', 'en_ruta', 'entregado'];
 
 function updateStepper(status) {
   const activeIdx = STATUS_ORDER.indexOf(status);

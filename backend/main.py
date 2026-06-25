@@ -252,7 +252,7 @@ def get_order_endpoint(order_id: str) -> dict:
     tags=["Pedidos"],
 )
 def list_orders(status: Optional[str] = None) -> list[dict]:
-    statuses = status.split(",") if status else ["recibido", "preparando", "horno", "listo", "entregado"]
+    statuses = status.split(",") if status else ["recibido", "preparando", "horno", "listo", "en_ruta", "entregado"]
     orders = list_orders_by_status(statuses)
     return [_serialize_order(o) for o in orders]
 
