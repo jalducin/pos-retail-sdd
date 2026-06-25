@@ -228,6 +228,11 @@ const STATUS_ORDER = ['recibido', 'preparando', 'horno', 'listo', 'en_ruta', 'en
 
 function updateStepper(status) {
   const activeIdx = STATUS_ORDER.indexOf(status);
+  const totalGaps = STATUS_ORDER.length - 1;
+  const fillPct   = activeIdx > 0 ? (activeIdx / totalGaps) * 100 : 0;
+
+  const fill = document.getElementById('tracker-fill');
+  if (fill) fill.style.width = `${fillPct}%`;
 
   document.querySelectorAll('.step').forEach((el, i) => {
     el.classList.remove('active', 'done');

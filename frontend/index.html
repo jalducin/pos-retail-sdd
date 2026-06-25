@@ -67,30 +67,39 @@
       <p id="tracker-customer" class="tracker-name"></p>
 
       <div class="stepper">
-        <div class="stepper-track"></div>
+        <div class="stepper-track">
+          <div class="stepper-track-fill" id="tracker-fill"></div>
+        </div>
+
         <div class="step" data-status="recibido">
-          <div class="step-node">🍕</div>
+          <div class="step-node">🧾</div>
           <span class="step-label">Recibido</span>
+          <span class="step-sub">Orden confirmada</span>
         </div>
         <div class="step" data-status="preparando">
           <div class="step-node">👨‍🍳</div>
           <span class="step-label">Preparando</span>
+          <span class="step-sub">Armando tu pizza</span>
         </div>
         <div class="step" data-status="horno">
           <div class="step-node">🔥</div>
           <span class="step-label">En horno</span>
+          <span class="step-sub">300°C · crujiente</span>
         </div>
         <div class="step" data-status="listo">
-          <div class="step-node">✅</div>
+          <div class="step-node">📦</div>
           <span class="step-label">Listo</span>
+          <span class="step-sub">Empaquetando</span>
         </div>
         <div class="step" data-status="en_ruta">
           <div class="step-node">🛵</div>
           <span class="step-label">En ruta</span>
+          <span class="step-sub">Con el repartidor</span>
         </div>
         <div class="step" data-status="entregado">
-          <div class="step-node">🎉</div>
+          <div class="step-node">🏠</div>
           <span class="step-label">Entregado</span>
+          <span class="step-sub">¡A tu puerta!</span>
         </div>
       </div>
 
@@ -100,6 +109,21 @@
       </div>
 
       <div id="ws-status" class="ws-status"></div>
+
+      <!-- Nota de integración API -->
+      <div class="api-integration-note">
+        <div class="api-note-content">
+          <span class="api-note-icon">⚡</span>
+          <div class="api-note-text">
+            <strong>Sistema API-driven</strong>
+            <span>
+              En producción, cada estado lo avanza un empleado desde su panel
+              o el repartidor desde su app.
+              Endpoint: <code>PATCH /api/orders/{id}/status</code>
+            </span>
+          </div>
+        </div>
+      </div>
 
       <button class="btn-secondary" onclick="startOver()">Hacer otro pedido</button>
     </section>
