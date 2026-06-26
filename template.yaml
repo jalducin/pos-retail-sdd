@@ -214,6 +214,14 @@ Resources:
   # ---------------------------------------------------------------------------
   # Step Functions Express Workflow
   # ---------------------------------------------------------------------------
+
+  # Log group para ver ejecuciones completas en consola AWS y CloudWatch
+  OrderTrackerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/states/pyzzeria-order-tracker
+      RetentionInDays: 30
+
   StepFunctionsRole:
     Type: AWS::IAM::Role
     Properties:
@@ -232,6 +240,22 @@ Resources:
               - Effect: Allow
                 Action: lambda:InvokeFunction
                 Resource: !GetAtt PyzzeriaStatusUpdateFunction.Arn
+        - PolicyName: CloudWatchLogsDelivery
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                  - logs:GetLogDelivery
+                  - logs:UpdateLogDelivery
+                  - logs:DeleteLogDelivery
+                  - logs:ListLogDeliveries
+                  - logs:PutLogEvents
+                  - logs:PutResourcePolicy
+                  - logs:DescribeResourcePolicies
+                  - logs:DescribeLogGroups
+                Resource: '*'
 
   OrderTrackerStateMachine:
     Type: AWS::StepFunctions::StateMachine
@@ -239,9 +263,15 @@ Resources:
       StateMachineName: pyzzeria-order-tracker
       StateMachineType: EXPRESS
       RoleArn: !GetAtt StepFunctionsRole.Arn
+      LoggingConfiguration:
+        Level: ALL
+        IncludeExecutionData: true
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt OrderTrackerLogGroup.Arn
       DefinitionString: !Sub |
         {
-          "Comment": "Pyzzeria order state simulator",
+          "Comment": "Pyzzeria order tracker — ~82s. Extension points: (1) SetEnRuta puede llamar a una delivery API externa (Uber Direct, Rappi, Google Maps Routes); (2) WaitToEntregado puede reemplazarse por waitForTaskToken resuelto via webhook del repartidor.",
           "StartAt": "WaitToPreparando",
           "States": {
             "WaitToPreparando": {
@@ -298,6 +328,7 @@ Resources:
               "Next": "SetEnRuta"
             },
             "SetEnRuta": {
+              "Comment": "INTEGRATION POINT — reemplazar por Task que llame a delivery API (Uber Direct, Rappi, etc.) y retorne trackingUrl + driverId para pasarlos al siguiente estado.",
               "Type": "Task",
               "Resource": "${PyzzeriaStatusUpdateFunction.Arn}",
               "Parameters": {
@@ -309,6 +340,7 @@ Resources:
               "Next": "WaitToEntregado"
             },
             "WaitToEntregado": {
+              "Comment": "INTEGRATION POINT — reemplazar por Task con waitForTaskToken; el taskToken se envía al repartidor y él lo resuelve al marcar entregado desde su app.",
               "Type": "Wait",
               "Seconds": 20,
               "Next": "SetEntregado"
@@ -418,3 +450,15 @@ Outputs:
     Value: !Ref FrontendBucket
     Export:
       Name: PyzzeriaFrontendBucket
+
+  StateMachineArn:
+    Description: ARN del Step Functions Express Workflow
+    Value: !Ref OrderTrackerStateMachine
+    Export:
+      Name: PyzzeriaStateMachineArn
+
+  OrderTrackerLogGroup:
+    Description: CloudWatch Log Group con historial de ejecuciones del tracker
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#logsV2:log-groups/log-group/$252Faws$252Fstates$252Fpyzzeria-order-tracker"
+    Export:
+      Name: PyzzeriaOrderTrackerLogGroup
